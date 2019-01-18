@@ -8,7 +8,7 @@
 
     <fragment
         android:id="@+id/qr_fragment"
-        android:name="com.ysq.qrcode.QrFragment"
+        android:name="com.ysq.qrlib.QrFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

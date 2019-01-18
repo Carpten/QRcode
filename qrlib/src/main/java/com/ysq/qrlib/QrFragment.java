@@ -1,4 +1,4 @@
-package com.ysq.qrcode;
+package com.ysq.qrlib;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -9,7 +9,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 
 import com.google.zxing.BarcodeFormat;
@@ -19,7 +18,6 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.Result;
 import com.google.zxing.common.GlobalHistogramBinarizer;
 import com.google.zxing.common.HybridBinarizer;
-import com.ysq.cpp.DataHandler;
 
 import java.util.Hashtable;
 import java.util.Vector;
@@ -79,16 +77,16 @@ public class QrFragment extends CameraFragment {
             @Override
             public void run() {
                 try {
-//                    byte[] rotatedData = new byte[data.length];
-//                    for (int y = 0; y < mPreviewSize.height; y++) {
-//                        for (int x = 0; x < mPreviewSize.width; x++) {
-//                            rotatedData[x * mPreviewSize.height + mPreviewSize.height - y - 1]
-//                                    = data[x + y * mPreviewSize.width];
-//                        }
-//                    }
+                    byte[] rotatedData = new byte[data.length];
+                    for (int y = 0; y < mPreviewSize.height; y++) {
+                        for (int x = 0; x < mPreviewSize.width; x++) {
+                            rotatedData[x * mPreviewSize.height + mPreviewSize.height - y - 1]
+                                    = data[x + y * mPreviewSize.width];
+                        }
+                    }
 
-                    byte[] rotatedData = new DataHandler().arrayFromJNI(
-                            data, mPreviewSize.width, mPreviewSize.height);
+//                    byte[] rotatedData = new DataHandler().arrayFromJNI(
+//                            data, mPreviewSize.width, mPreviewSize.height);
                     int pW = mPreviewSize.height;
                     int pH = mPreviewSize.width;
 

@@ -1,4 +1,4 @@
-package com.ysq.qrcode;
+package com.ysq.qrlib;
 
 import android.Manifest;
 import android.app.AlertDialog;

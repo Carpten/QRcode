@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ysq.qrcode;
+package com.ysq.qrlib;
 
 import android.graphics.Bitmap;
 

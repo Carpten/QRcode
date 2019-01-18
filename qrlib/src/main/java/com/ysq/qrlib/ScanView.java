@@ -1,4 +1,4 @@
-package com.ysq.qrcode;
+package com.ysq.qrlib;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -24,8 +24,6 @@ import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
-
-import com.ysq.qrcode.R;
 
 public class ScanView extends View {
 
