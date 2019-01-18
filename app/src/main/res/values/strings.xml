@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Qrcode</string>
+
+    <string name="ysq_camera_open_failed">相机已被其他应用占用</string>
+    <string name="ysq_permissions_carmea_deny_title">获取权限失败</string>
+    <string name="ysq_permissions_carmea_deny_message">扫描二维码需要相机权限，请在应用权限中设置</string>
+    <string name="ysq_permissions_carmea_deny_button">确定</string>
+</resources>
