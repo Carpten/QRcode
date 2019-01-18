@@ -4,7 +4,7 @@
 extern "C" JNIEXPORT jbyteArray
 
 JNICALL
-Java_com_ysq_jni_DataHandler_arrayFromJNI(
+Java_com_ysq_cpp_DataHandler_arrayFromJNI(
         JNIEnv *env, jobject,
         jbyteArray originalArray, jint w, jint h) {
     jsize size = env->GetArrayLength(originalArray);

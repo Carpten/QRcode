@@ -19,7 +19,7 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.Result;
 import com.google.zxing.common.GlobalHistogramBinarizer;
 import com.google.zxing.common.HybridBinarizer;
-import com.ysq.jni.DataHandler;
+import com.ysq.cpp.DataHandler;
 
 import java.util.Hashtable;
 import java.util.Vector;
