@@ -5,7 +5,8 @@
    implementation 'com.github.Carpten:Qrcode:1.0.0'
 ```
 2.添加权限
-```<uses-permission android:name="android.permission.CAMERA" />
+```
+<uses-permission android:name="android.permission.CAMERA" />
 ```
 3.xml中引入QrFragment即可
 ```<fragment
