@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -33,9 +32,9 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     private SurfaceView mSurfaceView;
 
-    private Camera mCamera;
+    private FrameLayout mContainer;
 
-    private ViewGroup mViewContainer;
+    private Camera mCamera;
 
     private static ExecutorService mSingleExecutor = Executors.newSingleThreadExecutor();
 
@@ -45,49 +44,36 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             if (msg.what == 1) {
                 Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_SHORT).show();
             } else if (msg.what == 2) {
-                measureSurface();
-                mSingleExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            configCamera();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
+                addSurfaceView();
             }
             return false;
         }
     });
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera, container, false);
+        mContainer = (FrameLayout) inflater.inflate(R.layout.fragment_camera, container, false);
+        return mContainer;
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        mSurfaceView = (SurfaceView) view.findViewById(R.id.surface_view);
-        mSurfaceView.getHolder().addCallback(this);
-        mViewContainer = (ViewGroup) view;
-
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 88);
         } else {
-            mSingleExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    tryOpenCamera(false, true);
-                }
-            });
+            openCamera();
         }
     }
 
-    protected ViewGroup getContainer() {
-        return mViewContainer;
+    public ViewGroup getContainer() {
+        return mContainer;
+    }
+
+
+    public void onSurfaceAdded() {
+
     }
 
 
@@ -96,12 +82,7 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             , @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 88 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            mSingleExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    tryOpenCamera(false, true);
-                }
-            });
+            openCamera();
         } else {
             new AlertDialog.Builder(getContext())
                     .setCancelable(false)
@@ -109,50 +90,96 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
                     .setMessage(R.string.ysq_permissions_carmea_deny_message)
                     .setPositiveButton(R.string.ysq_permissions_carmea_deny_button, null)
                     .show();
-
         }
     }
-
-
-    private boolean mSurfaceOK, mPermissionOK;
 
     /**
      * 尝试打开相机
-     *
-     * @param surfaceOK    surfaceview
-     * @param permissionOk
      */
-    private void tryOpenCamera(boolean surfaceOK, boolean permissionOk) {
-        if (surfaceOK) mSurfaceOK = true;
-        if (permissionOk) mPermissionOK = true;
-
-        if (mCamera == null && mSurfaceOK && mPermissionOK) {
-            try {
-                stop();
-                mCamera = Camera.open(0);
-                configPrevieSize();
-            } catch (Exception e) {
-                Log.i("test", "e:" + e.getMessage());
-                Message message = Message.obtain();
-                message.what = 1;
-                message.obj = getString(R.string.ysq_camera_open_failed);
-                mHandler.sendMessage(message);
+    private void openCamera() {
+        mSingleExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mCamera = Camera.open(0);
+                    setPrevieSize();
+                } catch (Exception e) {
+                    Message message = Message.obtain();
+                    message.what = 1;
+                    message.obj = getString(R.string.ysq_camera_open_failed);
+                    mHandler.sendMessage(message);
+                }
             }
-        }
+        });
+
     }
 
-
-    private void configPrevieSize() {
+    /**
+     * 相机关闭，并释放
+     */
+    private void stop() {
         if (mCamera != null) {
-            List<Camera.Size> supportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
-            mPreviewSize = getPreviewSize(supportedPreviewSizes);
-            Message message = Message.obtain();
-            message.what = 2;
-            mHandler.sendMessage(message);
+            // Call stopPreview() to stop updating the preview surface.
+            mCamera.setPreviewCallback(null);
+            mCamera.stopPreview();
+
+            // Important: Call release() to release the camera for use by other
+            // applications. Applications should release the camera immediately
+            // during onPause() and re-open() it during onResume()).
+            mCamera.release();
+            mCamera = null;
         }
+
     }
 
 
+    /**
+     * 获取最佳相机预览分辨率
+     */
+    private void setPrevieSize() {
+        List<Camera.Size> supportedPreviewSizes =
+                mCamera.getParameters().getSupportedPreviewSizes();
+        mPreviewSize = getPreviewSize(supportedPreviewSizes);
+        Message message = Message.obtain();
+        message.what = 2;
+        mHandler.sendMessage(message);
+    }
+
+    /**
+     * 添加surfaceView
+     */
+    private void addSurfaceView() {
+        int width = mContainer.getWidth();
+        int height = mContainer.getHeight();
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, 0);
+        if (width * mPreviewSize.width < height * mPreviewSize.height) {
+            layoutParams.width = mPreviewSize.height * height / mPreviewSize.width;
+            layoutParams.height = height;
+        } else {
+            layoutParams.width = width;
+            layoutParams.height = mPreviewSize.width * width / mPreviewSize.height;
+        }
+
+        mSurfaceView = new SurfaceView(getContext());
+        mSurfaceView.setLayoutParams(layoutParams);
+        mSurfaceView.getHolder().addCallback(this);
+        mContainer.addView(mSurfaceView);
+        onSurfaceAdded();
+    }
+
+
+    protected int getSurfaceWidth() {
+        return mContainer.getWidth();
+    }
+
+    protected int getSurfaceHeigth() {
+        return mContainer.getHeight();
+    }
+
+
+    /**
+     * 配置相机
+     */
     public void configCamera() throws IOException {
         if (mCamera != null) {
             Camera.Parameters parameters = mCamera.getParameters();
@@ -166,29 +193,6 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             mCamera.startPreview();
             autoFocus();
         }
-    }
-
-
-    private void measureSurface() {
-        int width = mSurfaceView.getWidth();
-        int height = mSurfaceView.getHeight();
-        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) mSurfaceView.getLayoutParams();
-        if (width * mPreviewSize.width < height * mPreviewSize.height) {
-            layoutParams.width = mPreviewSize.height * height / mPreviewSize.width;
-            layoutParams.height = height;
-        } else {
-            layoutParams.width = width;
-            layoutParams.height = mPreviewSize.width * width / mPreviewSize.height;
-        }
-        mSurfaceView.setLayoutParams(layoutParams);
-    }
-
-    protected int getSurfaceWidth() {
-        return mSurfaceView.getWidth();
-    }
-
-    protected int getSurfaceHeigth() {
-        return mSurfaceView.getHeight();
     }
 
     /**
@@ -220,7 +224,7 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     private Camera.Size getPreviewSize(List<Camera.Size> sizeList) {
         float minRatio = Float.MAX_VALUE;
-        int targetSize = 1280 * 720;
+        int targetSize = 3000 * 3000;
         int position = 0;
         for (Camera.Size size : sizeList) {
             float ratio;
@@ -238,24 +242,6 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
     }
 
 
-    /**
-     * When this function returns, mCamera will be null.
-     */
-    private void stop() {
-        if (mCamera != null) {
-            // Call stopPreview() to stop updating the preview surface.
-            mCamera.setPreviewCallback(null);
-            mCamera.stopPreview();
-
-            // Important: Call release() to release the camera for use by other
-            // applications. Applications should release the camera immediately
-            // during onPause() and re-open() it during onResume()).
-            mCamera.release();
-            mCamera = null;
-        }
-
-    }
-
     protected void resetPreviewCallback() {
         mSingleExecutor.execute(new Runnable() {
             @Override
@@ -271,7 +257,11 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         mSingleExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                tryOpenCamera(true, false);
+                try {
+                    configCamera();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -314,7 +304,12 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     }
 
-
+    /**
+     * 打开关闭闪光灯
+     *
+     * @param camera     相机对象
+     * @param newSetting 相机开关
+     */
     private void doSetTorch(Camera camera, boolean newSetting) {
         Camera.Parameters parameters = camera.getParameters();
         String flashMode;

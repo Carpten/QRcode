@@ -7,6 +7,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.view.View;
@@ -63,14 +64,18 @@ public class QrFragment extends CameraFragment {
     });
 
     @Override
-    public void onViewCreated(final View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         initDecode();
         super.onViewCreated(view, savedInstanceState);
+    }
+
+
+    @Override
+    public void onSurfaceAdded() {
+        super.onSurfaceAdded();
         mScanView = new ScanView(getContext(), null);
         getContainer().addView(mScanView);
     }
-
-    private int mFindFitWidth;
 
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
@@ -90,11 +95,6 @@ public class QrFragment extends CameraFragment {
                             data, mPreviewSize.width, mPreviewSize.height);
                     int pW = mPreviewSize.height;
                     int pH = mPreviewSize.width;
-
-//                    int ratioWidthNum = mFindFitWidth % 8;
-//                    ratioWidthNum = ratioWidthNum / 2;
-//                    mFindFitWidth++;
-//                    float ratioWidth = ratioWidthNum / 32f;
 
                     Rect rect = mScanView.getScanBoxAreaRect();
                     int w = pW * rect.width() / getSurfaceWidth();
