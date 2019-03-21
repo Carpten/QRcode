@@ -326,7 +326,7 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         camera.setParameters(parameters);
     }
 
-    private static String findSettableValue(Collection<String> supportedValues, String... desiredValues) {
+    private String findSettableValue(Collection<String> supportedValues, String... desiredValues) {
         String result = null;
         if (supportedValues != null) {
             for (String desiredValue : desiredValues) {
