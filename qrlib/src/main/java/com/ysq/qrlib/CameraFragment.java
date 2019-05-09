@@ -224,7 +224,7 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     private Camera.Size getPreviewSize(List<Camera.Size> sizeList) {
         float minRatio = Float.MAX_VALUE;
-        int targetSize = 3000 * 3000;
+        int targetSize = 800 * 600;
         int position = 0;
         for (Camera.Size size : sizeList) {
             float ratio;
