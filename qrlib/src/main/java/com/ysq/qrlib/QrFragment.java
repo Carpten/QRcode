@@ -30,7 +30,10 @@ public class QrFragment extends CameraFragment {
 
     private ScanView mScanView;
 
+    private OnCodeGetListener mOnCodeGetListener;
+
     @Override
+
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
@@ -45,20 +48,15 @@ public class QrFragment extends CameraFragment {
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            new AlertDialog.Builder(getContext())
-                    .setMessage((String) msg.obj)
-                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mExecutorService.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    resetPreviewCallback();
-                                }
-                            });
-                        }
-                    })
-                    .show();
+            if (mOnCodeGetListener != null) {
+                mOnCodeGetListener.onCodeGet((String) msg.obj);
+            }
+            mExecutorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    resetPreviewCallback();
+                }
+            });
             return false;
         }
     });
@@ -150,5 +148,13 @@ public class QrFragment extends CameraFragment {
         hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
 
         mQrReader.setHints(hints);
+    }
+
+    public void setOnCodeGetListener(OnCodeGetListener onCodeGetListener) {
+        this.mOnCodeGetListener = onCodeGetListener;
+    }
+
+    public interface OnCodeGetListener {
+        void onCodeGet(String code);
     }
 }
