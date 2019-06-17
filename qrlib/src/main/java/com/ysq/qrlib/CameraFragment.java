@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -45,6 +44,11 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
                 Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_SHORT).show();
             } else if (msg.what == 2) {
                 addSurfaceView();
+            } else if (msg.what == 3) {
+                if (mSurfaceView != null) {
+                    mSurfaceView.getHolder().removeCallback(CameraFragment.this);
+                    mContainer.removeView(mSurfaceView);
+                }
             }
             return false;
         }
@@ -58,7 +62,8 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onResume() {
+        super.onResume();
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 88);
@@ -129,6 +134,10 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             mCamera.release();
             mCamera = null;
         }
+
+        Message message = Message.obtain();
+        message.what = 3;
+        mHandler.sendMessage(message);
 
     }
 
