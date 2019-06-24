@@ -35,7 +35,9 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     private Camera mCamera;
 
-    private static ExecutorService mSingleExecutor = Executors.newSingleThreadExecutor();
+    private boolean mIsPause;
+
+    private ExecutorService mSingleExecutor = Executors.newSingleThreadExecutor();
 
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -64,12 +66,27 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
     @Override
     public void onResume() {
         super.onResume();
+        mIsPause = false;
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 88);
         } else {
             openCamera();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mIsPause = true;
+        mSingleExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (CameraFragment.class) {
+                    stop();
+                }
+            }
+        });
     }
 
     public ViewGroup getContainer() {
@@ -106,8 +123,10 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             @Override
             public void run() {
                 try {
-                    mCamera = Camera.open(0);
-                    setPrevieSize();
+                    synchronized (CameraFragment.class) {
+                        mCamera = Camera.open(0);
+                        setPrevieSize();
+                    }
                 } catch (Exception e) {
                     Message message = Message.obtain();
                     message.what = 1;
@@ -120,6 +139,7 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
     }
 
     /**
+     * x
      * 相机关闭，并释放
      */
     private void stop() {
@@ -158,22 +178,24 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
      * 添加surfaceView
      */
     private void addSurfaceView() {
-        int width = mContainer.getWidth();
-        int height = mContainer.getHeight();
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, 0);
-        if (width * mPreviewSize.width < height * mPreviewSize.height) {
-            layoutParams.width = mPreviewSize.height * height / mPreviewSize.width;
-            layoutParams.height = height;
-        } else {
-            layoutParams.width = width;
-            layoutParams.height = mPreviewSize.width * width / mPreviewSize.height;
-        }
+        if (!mIsPause) {
+            int width = mContainer.getWidth();
+            int height = mContainer.getHeight();
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(0, 0);
+            if (width * mPreviewSize.width < height * mPreviewSize.height) {
+                layoutParams.width = mPreviewSize.height * height / mPreviewSize.width;
+                layoutParams.height = height;
+            } else {
+                layoutParams.width = width;
+                layoutParams.height = mPreviewSize.width * width / mPreviewSize.height;
+            }
 
-        mSurfaceView = new SurfaceView(getContext());
-        mSurfaceView.setLayoutParams(layoutParams);
-        mSurfaceView.getHolder().addCallback(this);
-        mContainer.addView(mSurfaceView);
-        onSurfaceAdded();
+            mSurfaceView = new SurfaceView(getContext());
+            mSurfaceView.setLayoutParams(layoutParams);
+            mSurfaceView.getHolder().addCallback(this);
+            mContainer.addView(mSurfaceView);
+            onSurfaceAdded();
+        }
     }
 
 
@@ -255,8 +277,10 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         mSingleExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                if (mCamera != null)
-                    mCamera.setOneShotPreviewCallback(CameraFragment.this);
+                synchronized (CameraFragment.class) {
+                    if (mCamera != null)
+                        mCamera.setOneShotPreviewCallback(CameraFragment.this);
+                }
             }
         });
     }
@@ -267,7 +291,9 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
             @Override
             public void run() {
                 try {
-                    configCamera();
+                    synchronized (CameraFragment.class) {
+                        configCamera();
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -282,20 +308,17 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        mSingleExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                stop();
-            }
-        });
+
     }
 
     public void openFlashlight() {
         mSingleExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                if (mCamera != null) {
-                    doSetTorch(mCamera, true);
+                synchronized (CameraFragment.class) {
+                    if (mCamera != null) {
+                        doSetTorch(mCamera, true);
+                    }
                 }
             }
         });
@@ -305,8 +328,10 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         mSingleExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                if (mCamera != null) {
-                    doSetTorch(mCamera, false);
+                synchronized (CameraFragment.class) {
+                    if (mCamera != null) {
+                        doSetTorch(mCamera, false);
+                    }
                 }
             }
         });
