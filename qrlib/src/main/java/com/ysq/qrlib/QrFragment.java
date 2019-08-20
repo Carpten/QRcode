@@ -90,15 +90,15 @@ public class QrFragment extends CameraFragment {
 //                    }
 
                     byte[] rotatedData = new DataHandler().arrayFromJNI(
-                            data, mPreviewSize.width, mPreviewSize.height);
-                    int pW = mPreviewSize.height;
-                    int pH = mPreviewSize.width;
+                            data, mPreviewSize[0], mPreviewSize[1]);
+                    int pW = mPreviewSize[1];
+                    int pH = mPreviewSize[0];
 
                     Rect rect = mScanView.getScanBoxAreaRect();
-                    int w = pW * rect.width() / getSurfaceWidth();
-                    int h = pH * rect.height() / getSurfaceHeigth();
+                    int w = pW * rect.width() / getContainer().getWidth();
+                    int h = pH * rect.height() / getContainer().getHeight();
                     int l = (pW - w) / 2;
-                    int t = pH * rect.top / getSurfaceHeigth();
+                    int t = pH * rect.top / getContainer().getHeight();
 
 
                     PlanarYUVLuminanceSource source = new PlanarYUVLuminanceSource(
