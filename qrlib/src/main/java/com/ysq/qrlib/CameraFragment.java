@@ -23,6 +23,8 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
     private FrameLayout mContainer;
 
+    private int mScaleType = 0;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -69,6 +71,10 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         return mContainer;
     }
 
+    public int getScaleType() {
+        return mScaleType;
+    }
+
     /**
      * 添加surfaceView
      */
@@ -79,9 +85,13 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
         if (width * mPreviewSize[0] < height * mPreviewSize[1]) {
             layoutParams.width = mPreviewSize[1] * height / mPreviewSize[0];
             layoutParams.height = height;
+            layoutParams.leftMargin = -(layoutParams.width - width) / 2;
+            mScaleType = 0;
         } else {
             layoutParams.width = width;
             layoutParams.height = mPreviewSize[0] * width / mPreviewSize[1];
+            layoutParams.topMargin = -(layoutParams.height - height) / 2;
+            mScaleType = 1;
         }
         mSurfaceView = new SurfaceView(getContext());
         mSurfaceView.setLayoutParams(layoutParams);

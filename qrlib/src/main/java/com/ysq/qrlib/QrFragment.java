@@ -10,6 +10,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 
 import com.google.zxing.BarcodeFormat;
@@ -81,25 +82,24 @@ public class QrFragment extends CameraFragment {
             @Override
             public void run() {
                 try {
-//                    byte[] rotatedData = new byte[data.length];
-//                    for (int y = 0; y < mPreviewSize.height; y++) {
-//                        for (int x = 0; x < mPreviewSize.width; x++) {
-//                            rotatedData[x * mPreviewSize.height + mPreviewSize.height - y - 1]
-//                                    = data[x + y * mPreviewSize.width];
-//                        }
-//                    }
 
                     byte[] rotatedData = new DataHandler().arrayFromJNI(
                             data, mPreviewSize[0], mPreviewSize[1]);
                     int pW = mPreviewSize[1];
                     int pH = mPreviewSize[0];
 
-                    Rect rect = mScanView.getScanBoxAreaRect();
-                    int w = pW * rect.width() / getContainer().getWidth();
-                    int h = pH * rect.height() / getContainer().getHeight();
-                    int l = (pW - w) / 2;
-                    int t = pH * rect.top / getContainer().getHeight();
 
+                    Rect rect = mScanView.getScanBoxAreaRect();
+                    int w, h;
+                    if (getScaleType() == 0) {
+                        w = pH * rect.width() / getContainer().getHeight();
+                        h = pH * rect.height() / getContainer().getHeight();
+                    } else {
+                        w = pW * rect.width() / getContainer().getWidth();
+                        h = pW * rect.height() / getContainer().getWidth();
+                    }
+                    int l = (pW - w) / 2;
+                    int t = (pH - h) / 2;
 
                     PlanarYUVLuminanceSource source = new PlanarYUVLuminanceSource(
                             rotatedData, pW, pH, l, t, w, h);
@@ -136,15 +136,12 @@ public class QrFragment extends CameraFragment {
         Hashtable<DecodeHintType, Object> hints = new Hashtable<>(2);
         // 可以解析的编码类型
         Vector<BarcodeFormat> decodeFormats = new Vector<>();
-        if (decodeFormats.isEmpty()) {
-            decodeFormats = new Vector<>();
-            Vector<BarcodeFormat> ONE_D_FORMATS = new Vector<>(1);
-            ONE_D_FORMATS.add(BarcodeFormat.CODE_128);
-            Vector<BarcodeFormat> QR_CODE_FORMATS = new Vector<>(1);
-            QR_CODE_FORMATS.add(BarcodeFormat.QR_CODE);
-            decodeFormats.addAll(ONE_D_FORMATS);
-            decodeFormats.addAll(QR_CODE_FORMATS);
-        }
+        Vector<BarcodeFormat> ONE_D_FORMATS = new Vector<>(1);
+        ONE_D_FORMATS.add(BarcodeFormat.CODE_128);
+        Vector<BarcodeFormat> QR_CODE_FORMATS = new Vector<>(1);
+        QR_CODE_FORMATS.add(BarcodeFormat.QR_CODE);
+        decodeFormats.addAll(ONE_D_FORMATS);
+        decodeFormats.addAll(QR_CODE_FORMATS);
         hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
 
         mQrReader.setHints(hints);
