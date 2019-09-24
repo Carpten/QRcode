@@ -12,7 +12,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
 public abstract class CameraFragment extends Fragment implements Camera.PreviewCallback
@@ -51,16 +50,13 @@ public abstract class CameraFragment extends Fragment implements Camera.PreviewC
 
 
     private void openCamera() {
-        mContainer.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        mPreviewSize = CameraManage.get().getPreviewSize();
-                        addSurfaceView();
-                        mContainer.getViewTreeObserver()
-                                .removeGlobalOnLayoutListener(this);
-                    }
-                });
+        mContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                mPreviewSize = CameraManage.get().getPreviewSize();
+                addSurfaceView();
+            }
+        });
     }
 
     public void onSurfaceAdded() {
